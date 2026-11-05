@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>INTERFACE Registration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --grey:#F3F3F3; --pink:#FF2E9A; --purple:#5D00FF; --lime:#CFFF04; --black:#1C1C1C;
+    --border:4px solid var(--black);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; font-family:'Roboto',sans-serif; color:var(--black);
+    background:var(--grey);
+    background-image:linear-gradient(var(--black) 1px,transparent 1px),linear-gradient(90deg,var(--black) 1px,transparent 1px);
+    background-size:48px 48px; background-position:-1px -1px;
+    background-blend-mode:soft-light; overflow-x:hidden;
+  }
+  body::before{ /* fade the grid so it stays subtle */
+    content:""; position:fixed; inset:0; background:rgba(243,243,243,.88); z-index:-2;
+  }
+
+  /* ---------- floating background shapes ---------- */
+  .shape{position:fixed; z-index:-1; border:var(--border)}
+  .s1{width:90px;height:90px;background:var(--lime);top:14%;right:6%;animation:spin 14s linear infinite}
+  .s2{width:70px;height:70px;background:var(--purple);border-radius:50%;bottom:10%;left:5%;animation:float 5s ease-in-out infinite}
+  .s3{width:0;height:0;border:0;border-left:40px solid transparent;border-right:40px solid transparent;border-bottom:70px solid var(--pink);bottom:22%;right:10%;animation:float 6s ease-in-out infinite reverse}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes float{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-22px) rotate(12deg)}}
+
+  /* ---------- marquee ---------- */
+  .marquee{background:var(--black);color:var(--lime);border-bottom:var(--border);overflow:hidden;white-space:nowrap}
+  .marquee span{display:inline-block;padding:10px 0;font-weight:900;letter-spacing:.15em;animation:scroll 18s linear infinite}
+  @keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+  /* ---------- layout ---------- */
+  .wrap{max-width:820px;margin:0 auto;padding:clamp(16px,4vw,40px) clamp(14px,4vw,24px) 60px}
+  .screen{display:none}
+  .screen.active{display:block;animation:slam .45s cubic-bezier(.2,1.5,.4,1)}
+  @keyframes slam{from{opacity:0;transform:translateY(40px) rotate(-1.5deg)}to{opacity:1;transform:none}}
+
+  .card{background:#fff;border:var(--border);box-shadow:12px 12px 0 var(--black);padding:clamp(18px,4vw,36px);position:relative}
+  .sticker{
+    position:absolute; top:-20px; right:-8px; background:var(--pink); color:#fff;
+    border:var(--border); padding:6px 14px; font-weight:900; letter-spacing:.1em;
+    transform:rotate(4deg); animation:wobble 2.4s ease-in-out infinite;
+  }
+  @keyframes wobble{0%,100%{transform:rotate(4deg)}50%{transform:rotate(-3deg) scale(1.06)}}
+
+  h1{
+    margin:0 0 6px; font-weight:900; text-transform:uppercase; line-height:.95;
+    font-size:clamp(2.2rem,9vw,4.6rem); letter-spacing:-.02em;
+  }
+  h1 .hl{background:var(--lime);padding:0 8px;display:inline-block;border:var(--border);transform:rotate(-1.5deg)}
+  .sub{font-weight:700;text-transform:uppercase;margin:14px 0 26px}
+
+  /* ---------- form fields ---------- */
+  label.f{display:block;font-weight:900;text-transform:uppercase;margin:20px 0 6px;letter-spacing:.05em}
+  input[type=text],input[type=email],input[type=tel]{
+    width:100%; padding:14px; font:700 1.05rem 'Roboto',sans-serif; background:var(--grey);
+    border:var(--border); border-radius:0; outline:none; transition:transform .15s, box-shadow .15s, background .15s;
+  }
+  input:focus{background:var(--lime);transform:translate(-4px,-4px);box-shadow:6px 6px 0 var(--black)}
+  input:invalid:not(:placeholder-shown){background:#ffd6ea}
+
+  /* ---------- buttons ---------- */
+  .btn{
+    display:block; width:100%; margin-top:30px; padding:16px 20px; cursor:pointer;
+    font:900 1.2rem 'Roboto',sans-serif; text-transform:uppercase; letter-spacing:.08em;
+    background:var(--pink); color:#fff; border:var(--border); border-radius:0;
+    box-shadow:8px 8px 0 var(--black);
+    transition:transform .12s, box-shadow .12s, background .12s, color .12s;
+    animation:bob 2s ease-in-out infinite;
+  }
+  .btn:hover{background:var(--lime);color:var(--black);transform:translate(-4px,-4px) rotate(-1deg);box-shadow:12px 12px 0 var(--black);animation:none}
+  .btn:active{transform:translate(8px,8px);box-shadow:0 0 0 var(--black)}
+  .btn:disabled{opacity:.6;cursor:wait}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+
+  /* ---------- quiz ---------- */
+  .progress{border:var(--border);height:34px;background:#fff;margin:6px 0 24px;position:relative;overflow:hidden}
+  .bar{height:100%;width:0;background:repeating-linear-gradient(45deg,var(--purple) 0 14px,var(--pink) 14px 28px);transition:width .4s steps(8);border-right:var(--border)}
+  .pcount{position:absolute;inset:0;display:grid;place-items:center;font-weight:900;mix-blend-mode:difference;color:#fff}
+  .qtext{font-size:clamp(1.4rem,4.5vw,2.1rem);font-weight:900;text-transform:uppercase;line-height:1.1;margin:0 0 22px}
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .opt{
+    text-align:left; padding:16px; cursor:pointer; font:700 1.05rem 'Roboto',sans-serif;
+    background:var(--grey); border:var(--border); border-radius:0; box-shadow:6px 6px 0 var(--black);
+    transition:transform .12s, box-shadow .12s, background .12s;
+  }
+  .opt:hover{background:var(--lime);transform:translate(-3px,-3px) rotate(-.8deg);box-shadow:9px 9px 0 var(--black)}
+  .opt:active,.opt.picked{background:var(--pink);color:#fff;transform:translate(6px,6px);box-shadow:0 0 0 var(--black)}
+
+  /* ---------- result ---------- */
+  .rimg{
+    width:min(320px,80%); aspect-ratio:1/1; margin:10px auto 24px; display:block;
+    border:var(--border); box-shadow:10px 10px 0 var(--black); background:var(--lime);
+    object-fit:cover; transform:rotate(-2deg); animation:wobble2 3s ease-in-out infinite;
+  }
+  @keyframes wobble2{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg) scale(1.03)}}
+  .you{font-weight:900;text-transform:uppercase;letter-spacing:.15em;text-align:center;margin:0}
+  .rname{
+    text-align:center; font-weight:900; text-transform:uppercase; margin:10px 0 18px;
+    font-size:clamp(2rem,8vw,3.6rem); line-height:1; padding:10px; border:var(--border);
+    box-shadow:8px 8px 0 var(--black); animation:slam .6s cubic-bezier(.2,1.5,.4,1);
+  }
+  .rdesc{font-size:1.15rem;font-weight:700;text-align:center;max-width:560px;margin:0 auto 10px}
+  .note{text-align:center;font-weight:700;margin-top:18px}
+  .err{color:#fff;background:var(--black);padding:8px 12px;margin-top:14px;font-weight:700;display:none}
+
+  /* ---------- mobile ---------- */
+  @media (max-width:600px){
+    .opts{grid-template-columns:1fr}
+    .card{box-shadow:7px 7px 0 var(--black)}
+    .sticker{right:-4px}
+    .shape{opacity:.5}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="shape s1"></div><div class="shape s2"></div><div class="shape s3"></div>
+
+<div class="marquee"><span>
+  INTERFACE ★ FACTION TEST ★ CHOOSE YOUR SIDE ★ INTERFACE ★ FACTION TEST ★ CHOOSE YOUR SIDE ★
+  INTERFACE ★ FACTION TEST ★ CHOOSE YOUR SIDE ★ INTERFACE ★ FACTION TEST ★ CHOOSE YOUR SIDE ★
+</span></div>
+
+<div class="wrap">
+
+  <!-- ===================== PAGE 1: REGISTRATION ===================== -->
+  <section class="screen active" id="screen-reg">
+    <div class="card">
+      <div class="sticker">STEP 1 / 2</div>
+      <h1><span class="hl">INTERFACE</span><br>Registration</h1>
+      <p class="sub">Fill this in, then take the Faction Test.</p>
+
+      <form id="regForm">
+        <label class="f" for="name">Full name</label>
+        <input type="text" id="name" placeholder=" " required>
+
+        <label class="f" for="email">Email</label>
+        <input type="email" id="email" placeholder=" " required>
+
+        <label class="f" for="phone">Phone</label>
+        <input type="tel" id="phone" placeholder=" " required>
+
+        <button class="btn" type="submit">Next: Faction Test →</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ===================== PAGE 2: QUIZ ===================== -->
+  <section class="screen" id="screen-quiz">
+    <div class="card">
+      <div class="sticker">STEP 2 / 2</div>
+      <h1><span class="hl">Faction</span> Test</h1>
+      <p class="sub">Pick the answer that feels most like you.</p>
+
+      <div class="progress"><div class="bar" id="bar"></div><div class="pcount" id="pcount"></div></div>
+      <h2 class="qtext" id="qtext"></h2>
+      <div class="opts" id="opts"></div>
+      <div class="err" id="err"></div>
+    </div>
+  </section>
+
+  <!-- ===================== PAGE 3: RESULT ===================== -->
+  <section class="screen" id="screen-result">
+    <div class="card">
+      <div class="sticker">RESULT</div>
+      <p class="you">You belong to</p>
+      <div class="rname" id="rname"></div>
+      <img class="rimg" id="rimg" alt="Faction image">
+      <p class="rdesc" id="rdesc"></p>
+      <p class="note" id="rnote">You're registered. See you at INTERFACE!</p>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* =====================================================================
+   1) PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE
+   ===================================================================== */
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw38oII560mUghmP9mXNs3o4X3RO9Ice8ToIZitaLvxBfoY8IaDJLIwTDxvIrhRL0I-/exec";
+
+/* =====================================================================
+   2) CUSTOMIZE YOUR 4 FACTIONS HERE
+      name  -> the faction's name (shown on the result page and saved in your Sheet)
+      desc  -> short description shown under the image
+      img   -> path to your image file (e.g. put images in an "images" folder
+               next to index.html). Until the file exists, a dummy image is shown.
+      color -> background colour of the name banner
+      text  -> text colour of the name banner
+   ===================================================================== */
+const FACTIONS = {
+  A: { name: "FACTION A",  // <-- RENAME FACTION A
+       desc: "Write a short description for Faction A here.",
+       img:  "images/faction-a.png",
+       color:"#FF2E9A", text:"#FFFFFF" },
+
+  B: { name: "FACTION B",  // <-- RENAME FACTION B
+       desc: "Write a short description for Faction B here.",
+       img:  "images/faction-b.png",
+       color:"#5D00FF", text:"#FFFFFF" },
+
+  C: { name: "FACTION C",  // <-- RENAME FACTION C
+       desc: "Write a short description for Faction C here.",
+       img:  "images/faction-c.png",
+       color:"#CFFF04", text:"#1C1C1C" },
+
+  D: { name: "FACTION D",  // <-- RENAME FACTION D
+       desc: "Write a short description for Faction D here.",
+       img:  "images/faction-d.png",
+       color:"#1C1C1C", text:"#CFFF04" }
+};
+
+/* =====================================================================
+   3) EDIT THE 8 QUESTIONS HERE
+      Each option's first value (A/B/C/D) is the faction it scores a point for.
+      Answer order is shuffled automatically for each person.
+   ===================================================================== */
+const QUESTIONS = [
+  { q: "Your ideal weekend?", o: [
+      ["A","Making something creative"], ["B","Building or fixing a project"],
+      ["C","Exploring somewhere new"],   ["D","Hanging out with friends"] ]},
+
+  { q: "In a group project, you are the one who...", o: [
+      ["A","Brings the big ideas"],      ["B","Organises and gets it done"],
+      ["C","Researches new approaches"], ["D","Keeps everyone motivated"] ]},
+
+  { q: "Pick your superpower.", o: [
+      ["A","Bring any idea to life"],    ["B","Never make a mistake"],
+      ["C","Teleport anywhere"],         ["D","Read people's feelings"] ]},
+
+  { q: "When something breaks, you...", o: [
+      ["A","Invent a creative workaround"], ["B","Debug it step by step"],
+      ["C","Look up how others fixed it"],  ["D","Ask or offer a helping hand"] ]},
+
+  { q: "Which sounds like the best prize?", o: [
+      ["A","A pro design studio"],       ["B","A powerful new workstation"],
+      ["C","A trip around the world"],   ["D","A big party for your crew"] ]},
+
+  { q: "Pick a word that fits you.", o: [
+      ["A","Imaginative"], ["B","Reliable"], ["C","Curious"], ["D","Caring"] ]},
+
+  { q: "Your friends would say you are...", o: [
+      ["A","The artistic one"],          ["B","The dependable one"],
+      ["C","The adventurous one"],       ["D","The friendly one"] ]},
+
+  { q: "A deadline is tomorrow. You...", o: [
+      ["A","Add a final touch of style"],["B","Follow your checklist"],
+      ["C","Try a brand new shortcut"],  ["D","Rally the team to finish together"] ]}
+];
+
+/* =====================================================================
+   ---- You don't need to edit anything below this line ----
+   ===================================================================== */
+const $ = id => document.getElementById(id);
+const user = {};
+const scores = {A:0,B:0,C:0,D:0};
+let current = 0, locked = false;
+
+function show(id){
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  $(id).classList.add("active");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+const shuffle = arr => arr.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
+
+/* ---- Page 1 -> Page 2 ---- */
+$("regForm").addEventListener("submit", e => {
+  e.preventDefault();
+  user.name  = $("name").value.trim();
+  user.email = $("email").value.trim();
+  user.phone = $("phone").value.trim();
+  show("screen-quiz");
+  renderQuestion();
+});
+
+/* ---- Quiz ---- */
+function renderQuestion(){
+  locked = false;
+  const item = QUESTIONS[current];
+  $("qtext").textContent = (current+1) + ". " + item.q;
+  $("pcount").textContent = (current+1) + " / " + QUESTIONS.length;
+  $("bar").style.width = (current / QUESTIONS.length * 100) + "%";
+  $("opts").innerHTML = "";
+  shuffle(item.o).forEach(([key,text]) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "opt"; b.textContent = text;
+    b.addEventListener("click", () => pick(b,key));
+    $("opts").appendChild(b);
+  });
+}
+
+function pick(btn,key){
+  if(locked) return;
+  locked = true;
+  btn.classList.add("picked");
+  scores[key]++;
+  setTimeout(() => {
+    current++;
+    if(current < QUESTIONS.length) renderQuestion(); else finish();
+  }, 350);
+}
+
+/* ---- Finish: work out result, save to Sheet, show result page ---- */
+function dummyImg(){
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+    <rect width="400" height="400" fill="#CFFF04"/>
+    <path d="M0 0L400 400M400 0L0 400" stroke="#1C1C1C" stroke-width="6"/>
+    <rect x="70" y="165" width="260" height="70" fill="#F3F3F3" stroke="#1C1C1C" stroke-width="6"/>
+    <text x="200" y="212" font-family="Roboto,Arial,sans-serif" font-weight="900" font-size="30" text-anchor="middle" fill="#1C1C1C">IMAGE HERE</text></svg>`;
+  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+}
+
+async function finish(){
+  $("bar").style.width = "100%";
+  const top = Object.keys(scores).reduce((a,b) => scores[b] > scores[a] ? b : a);
+  const f = FACTIONS[top];
+
+  let saved = true;
+  try{
+    await fetch(SCRIPT_URL, {
+      method:"POST", mode:"no-cors",
+      headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body: JSON.stringify({ ...user, result:f.name, scores })
+    });
+  }catch(err){ saved = false; }
+
+  $("rname").textContent = f.name;
+  $("rname").style.background = f.color;
+  $("rname").style.color = f.text;
+  $("rdesc").textContent = f.desc;
+
+  const img = $("rimg");
+  img.onerror = () => { img.onerror = null; img.src = dummyImg(); };
+  img.src = f.img;
+
+  if(!saved) $("rnote").textContent = "Your result is above, but we couldn't save your registration. Please tell the organiser.";
+  show("screen-result");
+}
+</script>
+</body>
+</html>
