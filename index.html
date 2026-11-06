@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -10,176 +9,322 @@
 <style>
   :root{
     --grey:#F3F3F3; --pink:#FF2E9A; --purple:#5D00FF; --lime:#CFFF04; --black:#1C1C1C;
-    --border:4px solid var(--black);
+    --cut:22px; /* size of the chamfered (cut) corners */
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
   body{
-    margin:0; font-family:'Roboto',sans-serif; color:var(--black);
-    background:var(--grey);
-    background-image:linear-gradient(var(--black) 1px,transparent 1px),linear-gradient(90deg,var(--black) 1px,transparent 1px);
-    background-size:48px 48px; background-position:-1px -1px;
-    background-blend-mode:soft-light; overflow-x:hidden;
-  }
-  body::before{ /* fade the grid so it stays subtle */
-    content:""; position:fixed; inset:0; background:rgba(243,243,243,.88); z-index:-2;
+    margin:0; min-height:100vh; font-family:'Roboto',sans-serif; color:var(--grey);
+    background:var(--black); overflow-x:hidden; position:relative;
   }
 
-  /* ---------- floating background shapes ---------- */
-  .shape{position:fixed; z-index:-1; border:var(--border)}
-  .s1{width:90px;height:90px;background:var(--lime);top:14%;right:6%;animation:spin 14s linear infinite}
-  .s2{width:70px;height:70px;background:var(--purple);border-radius:50%;bottom:10%;left:5%;animation:float 5s ease-in-out infinite}
-  .s3{width:0;height:0;border:0;border-left:40px solid transparent;border-right:40px solid transparent;border-bottom:70px solid var(--pink);bottom:22%;right:10%;animation:float 6s ease-in-out infinite reverse}
+  /* ---------- BACKGROUND: grid, scanlines, scan bar, vignette ---------- */
+  body::before{
+    content:""; position:fixed; inset:0; z-index:-3;
+    background:
+      radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,.55) 100%),
+      linear-gradient(rgba(93,0,255,.28) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(93,0,255,.28) 1px, transparent 1px);
+    background-size:100% 100%, 56px 56px, 56px 56px;
+    animation:gridmove 12s linear infinite;
+  }
+  @keyframes gridmove{to{background-position:0 0, 0 56px, 56px 0}}
+  body::after{ /* CRT scanlines */
+    content:""; position:fixed; inset:0; z-index:100; pointer-events:none;
+    background:repeating-linear-gradient(0deg, rgba(0,0,0,.28) 0 1px, transparent 1px 3px);
+  }
+  .scanbar{
+    position:fixed; left:0; right:0; height:140px; z-index:-2; pointer-events:none;
+    background:linear-gradient(transparent, rgba(207,255,4,.07), transparent);
+    animation:scanbar 7s linear infinite;
+  }
+  @keyframes scanbar{from{top:-160px}to{top:100%}}
+
+  .deco{position:fixed; z-index:-1; pointer-events:none}
+  .d1{width:110px;height:110px;border:3px solid var(--purple);top:16%;right:5%;animation:spin 20s linear infinite}
+  .d1::after{content:"";position:absolute;inset:22px;border:3px solid var(--pink)}
+  .d2{bottom:9%;left:4%;width:70px;height:70px;animation:float 5s ease-in-out infinite}
+  .d2::before,.d2::after{content:"";position:absolute;background:var(--lime)}
+  .d2::before{left:50%;top:0;bottom:0;width:8px;margin-left:-4px}
+  .d2::after{top:50%;left:0;right:0;height:8px;margin-top:-4px}
   @keyframes spin{to{transform:rotate(360deg)}}
-  @keyframes float{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-22px) rotate(12deg)}}
+  @keyframes float{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-24px) rotate(45deg)}}
 
-  /* ---------- marquee ---------- */
-  .marquee{background:var(--black);color:var(--lime);border-bottom:var(--border);overflow:hidden;white-space:nowrap}
-  .marquee span{display:inline-block;padding:10px 0;font-weight:900;letter-spacing:.15em;animation:scroll 18s linear infinite}
-  @keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-
-  /* ---------- layout ---------- */
-  .wrap{max-width:820px;margin:0 auto;padding:clamp(16px,4vw,40px) clamp(14px,4vw,24px) 60px}
-  .screen{display:none}
-  .screen.active{display:block;animation:slam .45s cubic-bezier(.2,1.5,.4,1)}
-  @keyframes slam{from{opacity:0;transform:translateY(40px) rotate(-1.5deg)}to{opacity:1;transform:none}}
-
-  .card{background:#fff;border:var(--border);box-shadow:12px 12px 0 var(--black);padding:clamp(18px,4vw,36px);position:relative}
-  .sticker{
-    position:absolute; top:-20px; right:-8px; background:var(--pink); color:#fff;
-    border:var(--border); padding:6px 14px; font-weight:900; letter-spacing:.1em;
-    transform:rotate(4deg); animation:wobble 2.4s ease-in-out infinite;
+  /* ---------- HUD TOP BAR ---------- */
+  .hud{
+    position:sticky; top:0; z-index:50; display:flex; justify-content:space-between; align-items:center; gap:12px;
+    padding:10px clamp(14px,4vw,28px); background:var(--black); border-bottom:3px solid var(--lime);
+    font-weight:700; font-size:.72rem; text-transform:uppercase; letter-spacing:.22em; white-space:nowrap;
   }
-  @keyframes wobble{0%,100%{transform:rotate(4deg)}50%{transform:rotate(-3deg) scale(1.06)}}
+  .hud .on{color:var(--lime)}
+  .hud .on::before{content:"";display:inline-block;width:9px;height:9px;background:var(--lime);margin-right:10px;animation:blink 1s steps(2) infinite}
+  .hud .mid{color:var(--pink)}
+  .hud .clock{color:var(--grey)}
+  @keyframes blink{50%{opacity:0}}
+
+  /* ---------- LAYOUT ---------- */
+  .wrap{max-width:900px;margin:0 auto;padding:clamp(26px,5vw,56px) clamp(16px,4vw,28px) 70px}
+  .screen{display:none}
+  .screen.active{display:block;animation:boot .55s steps(7) both}
+  @keyframes boot{
+    0%{opacity:0;transform:translateX(-30px) skewX(8deg)}
+    40%{opacity:1;transform:translateX(14px) skewX(-4deg)}
+    100%{opacity:1;transform:none}
+  }
+
+  /* ---------- CARD (chamfered, neon offset shadow) ---------- */
+  .card-wrap{filter:drop-shadow(10px 10px 0 var(--purple))}
+  .card{
+    background:var(--lime); padding:3px;
+    clip-path:polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, var(--cut) 100%, 0 calc(100% - var(--cut)));
+  }
+  .card-in{
+    background:var(--black); position:relative; padding:clamp(22px,4.5vw,44px);
+    clip-path:polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+  }
+  .card-in::after{ /* corner tick marks */
+    content:"SYS//0x1C"; position:absolute; right:30px; bottom:10px; font-size:.62rem; font-weight:700;
+    letter-spacing:.25em; color:rgba(243,243,243,.3);
+  }
+
+  .tag{
+    display:inline-block; background:var(--pink); color:var(--grey); font-weight:900; font-size:.78rem;
+    text-transform:uppercase; letter-spacing:.22em; padding:7px 18px 7px 12px;
+    clip-path:polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+    animation:tagpulse 1.6s steps(2) infinite;
+  }
+  @keyframes tagpulse{50%{background:var(--purple)}}
 
   h1{
-    margin:0 0 6px; font-weight:900; text-transform:uppercase; line-height:.95;
-    font-size:clamp(2.2rem,9vw,4.6rem); letter-spacing:-.02em;
+    margin:18px 0 6px; font-weight:900; text-transform:uppercase; line-height:.92; letter-spacing:-.02em;
+    font-size:clamp(2.3rem,10vw,5rem); color:var(--grey);
   }
-  h1 .hl{background:var(--lime);padding:0 8px;display:inline-block;border:var(--border);transform:rotate(-1.5deg)}
-  .sub{font-weight:700;text-transform:uppercase;margin:14px 0 26px}
+  .glitch{position:relative;display:inline-block;color:var(--lime)}
+  .glitch::before,.glitch::after{
+    content:attr(data-text); position:absolute; left:0; top:0; width:100%; overflow:hidden;
+  }
+  .glitch::before{color:var(--pink);animation:g1 3.2s infinite steps(1)}
+  .glitch::after{color:var(--purple);animation:g2 2.6s infinite steps(1)}
+  @keyframes g1{
+    0%,86%,100%{clip-path:inset(0 0 100% 0);transform:none}
+    88%{clip-path:inset(12% 0 62% 0);transform:translate(-6px,0)}
+    92%{clip-path:inset(58% 0 14% 0);transform:translate(5px,0)}
+    96%{clip-path:inset(82% 0 2% 0);transform:translate(-3px,0)}
+  }
+  @keyframes g2{
+    0%,80%,100%{clip-path:inset(0 0 100% 0);transform:none}
+    82%{clip-path:inset(40% 0 40% 0);transform:translate(6px,0)}
+    90%{clip-path:inset(5% 0 80% 0);transform:translate(-5px,0)}
+    95%{clip-path:inset(70% 0 10% 0);transform:translate(3px,0)}
+  }
 
-  /* ---------- form fields ---------- */
-  label.f{display:block;font-weight:900;text-transform:uppercase;margin:20px 0 6px;letter-spacing:.05em}
+  .sub{
+    margin:16px 0 8px; font-weight:700; text-transform:uppercase; letter-spacing:.12em; font-size:.92rem; color:var(--grey);
+  }
+  .sub::before{content:">_ ";color:var(--lime)}
+  .sub::after{content:"█";color:var(--lime);margin-left:6px;animation:blink 1s steps(2) infinite}
+
+  /* ---------- FORM FIELDS ---------- */
+  .field{margin-top:24px}
+  .lbl{display:flex;gap:10px;align-items:center;font-weight:900;text-transform:uppercase;letter-spacing:.14em;font-size:.85rem;margin-bottom:8px}
+  .lbl i{font-style:normal;color:var(--pink)}
   input[type=text],input[type=email],input[type=tel]{
-    width:100%; padding:14px; font:700 1.05rem 'Roboto',sans-serif; background:var(--grey);
-    border:var(--border); border-radius:0; outline:none; transition:transform .15s, box-shadow .15s, background .15s;
+    width:100%; padding:15px 16px; font:700 1.05rem 'Roboto',sans-serif; color:var(--grey);
+    background:rgba(243,243,243,.06); border:2px solid var(--purple); border-left:10px solid var(--lime);
+    border-radius:0; outline:none; caret-color:var(--lime);
+    transition:transform .15s, box-shadow .15s, border-color .15s, background .15s;
   }
-  input:focus{background:var(--lime);transform:translate(-4px,-4px);box-shadow:6px 6px 0 var(--black)}
-  input:invalid:not(:placeholder-shown){background:#ffd6ea}
+  input::placeholder{color:rgba(243,243,243,.35);letter-spacing:.1em}
+  input:focus{
+    border-color:var(--pink); border-left-color:var(--pink); background:rgba(255,46,154,.1);
+    transform:translate(-4px,-4px); box-shadow:6px 6px 0 var(--purple);
+  }
 
-  /* ---------- buttons ---------- */
+  /* ---------- BUTTON ---------- */
+  .btn-wrap{margin-top:34px;filter:drop-shadow(7px 7px 0 var(--purple));transition:transform .15s, filter .15s}
+  .btn-wrap:hover{transform:translate(-3px,-3px);filter:drop-shadow(10px 10px 0 var(--pink))}
+  .btn-wrap:active{transform:translate(6px,6px);filter:drop-shadow(1px 1px 0 var(--purple))}
   .btn{
-    display:block; width:100%; margin-top:30px; padding:16px 20px; cursor:pointer;
-    font:900 1.2rem 'Roboto',sans-serif; text-transform:uppercase; letter-spacing:.08em;
-    background:var(--pink); color:#fff; border:var(--border); border-radius:0;
-    box-shadow:8px 8px 0 var(--black);
-    transition:transform .12s, box-shadow .12s, background .12s, color .12s;
-    animation:bob 2s ease-in-out infinite;
+    position:relative; overflow:hidden; display:flex; justify-content:space-between; align-items:center; gap:16px;
+    width:100%; padding:19px 24px; cursor:pointer; border:0; border-radius:0;
+    font:900 1.15rem 'Roboto',sans-serif; text-transform:uppercase; letter-spacing:.14em;
+    background:var(--lime); color:var(--black);
+    clip-path:polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+    transition:color .25s;
   }
-  .btn:hover{background:var(--lime);color:var(--black);transform:translate(-4px,-4px) rotate(-1deg);box-shadow:12px 12px 0 var(--black);animation:none}
-  .btn:active{transform:translate(8px,8px);box-shadow:0 0 0 var(--black)}
+  .btn::before{
+    content:""; position:absolute; inset:0; background:var(--pink); transform:translateX(-105%) skewX(-22deg);
+    transition:transform .35s cubic-bezier(.7,0,.2,1);
+  }
+  .btn span{position:relative;z-index:1}
+  .btn .arrow{display:inline-block;animation:nudge 1s steps(2) infinite}
+  .btn-wrap:hover .btn{color:var(--grey)}
+  .btn-wrap:hover .btn::before{transform:translateX(0) skewX(0)}
+  .btn-wrap:hover .arrow{animation:none;transform:translateX(8px)}
+  @keyframes nudge{50%{transform:translateX(6px)}}
   .btn:disabled{opacity:.6;cursor:wait}
-  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 
-  /* ---------- quiz ---------- */
-  .progress{border:var(--border);height:34px;background:#fff;margin:6px 0 24px;position:relative;overflow:hidden}
-  .bar{height:100%;width:0;background:repeating-linear-gradient(45deg,var(--purple) 0 14px,var(--pink) 14px 28px);transition:width .4s steps(8);border-right:var(--border)}
-  .pcount{position:absolute;inset:0;display:grid;place-items:center;font-weight:900;mix-blend-mode:difference;color:#fff}
-  .qtext{font-size:clamp(1.4rem,4.5vw,2.1rem);font-weight:900;text-transform:uppercase;line-height:1.1;margin:0 0 22px}
+  /* ---------- QUIZ ---------- */
+  .segs{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin:26px 0 8px}
+  .seg{height:16px;background:rgba(243,243,243,.12);clip-path:polygon(0 0,100% 0,calc(100% - 6px) 100%,0 100%);transition:background .2s}
+  .seg.done{background:var(--lime)}
+  .seg.now{background:var(--pink);animation:blink .8s steps(2) infinite}
+  .qmeta{display:flex;justify-content:space-between;font-weight:900;font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;margin-bottom:22px}
+  .qmeta b{color:var(--lime)}
+  .qtext{
+    font-size:clamp(1.5rem,4.8vw,2.4rem); font-weight:900; text-transform:uppercase; line-height:1.08;
+    margin:0 0 26px; animation:boot .4s steps(5) both;
+  }
   .opts{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   .opt{
-    text-align:left; padding:16px; cursor:pointer; font:700 1.05rem 'Roboto',sans-serif;
-    background:var(--grey); border:var(--border); border-radius:0; box-shadow:6px 6px 0 var(--black);
-    transition:transform .12s, box-shadow .12s, background .12s;
+    display:flex; gap:14px; align-items:center; text-align:left; cursor:pointer; padding:17px 16px;
+    font:700 1.05rem 'Roboto',sans-serif; color:var(--grey); background:rgba(243,243,243,.05);
+    border:2px solid rgba(243,243,243,.3); border-left:10px solid var(--purple); border-radius:0;
+    transition:transform .12s, box-shadow .12s, background .12s, color .12s, border-color .12s;
+    animation:boot .4s steps(5) both;
   }
-  .opt:hover{background:var(--lime);transform:translate(-3px,-3px) rotate(-.8deg);box-shadow:9px 9px 0 var(--black)}
-  .opt:active,.opt.picked{background:var(--pink);color:#fff;transform:translate(6px,6px);box-shadow:0 0 0 var(--black)}
+  .opt:nth-child(2){animation-delay:.05s}.opt:nth-child(3){animation-delay:.1s}.opt:nth-child(4){animation-delay:.15s}
+  .opt .k{font-weight:900;color:var(--lime);font-size:.85rem;letter-spacing:.1em}
+  .opt:hover{
+    background:var(--lime); color:var(--black); border-color:var(--lime);
+    transform:translate(-4px,-4px); box-shadow:6px 6px 0 var(--pink);
+  }
+  .opt:hover .k{color:var(--black)}
+  .opt:active,.opt.picked{
+    background:var(--pink); color:var(--grey); border-color:var(--pink); transform:translate(5px,5px); box-shadow:0 0 0 transparent;
+  }
+  .opt.picked .k{color:var(--grey)}
+  .err{display:none;margin-top:16px;padding:10px 14px;background:var(--pink);font-weight:700}
 
-  /* ---------- result ---------- */
-  .rimg{
-    width:min(320px,80%); aspect-ratio:1/1; margin:10px auto 24px; display:block;
-    border:var(--border); box-shadow:10px 10px 0 var(--black); background:var(--lime);
-    object-fit:cover; transform:rotate(-2deg); animation:wobble2 3s ease-in-out infinite;
-  }
-  @keyframes wobble2{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg) scale(1.03)}}
-  .you{font-weight:900;text-transform:uppercase;letter-spacing:.15em;text-align:center;margin:0}
+  /* ---------- RESULT ---------- */
+  .decrypt{padding:30px 0 10px}
+  .decrypt .line{font-weight:900;text-transform:uppercase;letter-spacing:.14em;font-size:clamp(1rem,3.4vw,1.3rem);color:var(--lime);margin:8px 0}
+  .decrypt .line.dim{color:rgba(243,243,243,.5);font-size:.82rem}
+  .dbar{height:20px;border:2px solid var(--lime);margin-top:22px;padding:3px}
+  .dfill{height:100%;width:0;background:repeating-linear-gradient(90deg,var(--lime) 0 12px,transparent 12px 16px);animation:fill 2.1s steps(14) forwards}
+  @keyframes fill{to{width:100%}}
+
+  .reveal{display:none}
+  .reveal.active{display:block;animation:boot .55s steps(7) both}
+  .cls{text-align:center;font-weight:900;font-size:.78rem;letter-spacing:.3em;text-transform:uppercase;color:var(--lime);margin:0}
+  .op{text-align:center;font-weight:700;font-size:.82rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(243,243,243,.6);margin:6px 0 0;word-break:break-word}
+  .rname-wrap{margin:20px 0 6px;filter:drop-shadow(8px 8px 0 var(--purple))}
   .rname{
-    text-align:center; font-weight:900; text-transform:uppercase; margin:10px 0 18px;
-    font-size:clamp(2rem,8vw,3.6rem); line-height:1; padding:10px; border:var(--border);
-    box-shadow:8px 8px 0 var(--black); animation:slam .6s cubic-bezier(.2,1.5,.4,1);
+    text-align:center; font-weight:900; text-transform:uppercase; line-height:1; letter-spacing:.04em;
+    font-size:clamp(2rem,9vw,3.8rem); padding:20px 14px;
+    clip-path:polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
   }
-  .rdesc{font-size:1.15rem;font-weight:700;text-align:center;max-width:560px;margin:0 auto 10px}
-  .note{text-align:center;font-weight:700;margin-top:18px}
-  .err{color:#fff;background:var(--black);padding:8px 12px;margin-top:14px;font-weight:700;display:none}
+  .frame{
+    position:relative; width:min(340px,86%); aspect-ratio:1/1; margin:36px auto 30px;
+    border:3px solid var(--lime); background:var(--black); animation:framepulse 2.4s steps(2) infinite;
+  }
+  @keyframes framepulse{50%{border-color:var(--purple)}}
+  .frame::before,.frame::after{content:"";position:absolute;width:30px;height:30px;border:5px solid var(--pink)}
+  .frame::before{top:-14px;left:-14px;border-right:0;border-bottom:0}
+  .frame::after{bottom:-14px;right:-14px;border-left:0;border-top:0}
+  .frame img{display:block;width:100%;height:100%;object-fit:cover}
+  .sweep{position:absolute;left:0;right:0;height:30%;pointer-events:none;background:linear-gradient(transparent,rgba(207,255,4,.28),transparent);animation:sweep 2.8s linear infinite}
+  @keyframes sweep{from{top:-30%}to{top:100%}}
+  .rdesc{font-size:1.12rem;font-weight:700;text-align:center;max-width:580px;margin:0 auto;line-height:1.5}
+  .note{
+    text-align:center;font-weight:900;text-transform:uppercase;letter-spacing:.14em;font-size:.82rem;
+    margin:28px 0 0;padding:12px;border:2px dashed var(--lime);color:var(--lime);
+  }
+  .note.bad{border-color:var(--pink);color:var(--pink)}
 
-  /* ---------- mobile ---------- */
-  @media (max-width:600px){
+  /* ---------- MOBILE ---------- */
+  @media (max-width:640px){
+    :root{--cut:16px}
+    .hud .mid{display:none}
     .opts{grid-template-columns:1fr}
-    .card{box-shadow:7px 7px 0 var(--black)}
-    .sticker{right:-4px}
-    .shape{opacity:.5}
+    .card-wrap{filter:drop-shadow(6px 6px 0 var(--purple))}
+    .deco{opacity:.35}
+    .card-in::after{display:none}
   }
-  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation:none!important;transition:none!important}
+    .dfill{width:100%}
+  }
 </style>
 </head>
 <body>
 
-<div class="shape s1"></div><div class="shape s2"></div><div class="shape s3"></div>
+<div class="scanbar"></div>
+<div class="deco d1"></div><div class="deco d2"></div>
 
-<div class="marquee"><span>
-  INTERFACE ★ FACTION TEST ★ CHOOSE YOUR SIDE ★ INTERFACE ★ FACTION TEST ★ CHOOSE YOUR SIDE ★
-  INTERFACE ★ FACTION TEST ★ CHOOSE YOUR SIDE ★ INTERFACE ★ FACTION TEST ★ CHOOSE YOUR SIDE ★
-</span></div>
+<div class="hud">
+  <span class="on">SYS.ONLINE</span>
+  <span class="mid">INTERFACE // FACTION PROTOCOL</span>
+  <span class="clock" id="clock">00:00:00</span>
+</div>
 
 <div class="wrap">
 
   <!-- ===================== PAGE 1: REGISTRATION ===================== -->
   <section class="screen active" id="screen-reg">
-    <div class="card">
-      <div class="sticker">STEP 1 / 2</div>
-      <h1><span class="hl">INTERFACE</span><br>Registration</h1>
-      <p class="sub">Fill this in, then take the Faction Test.</p>
+    <div class="card-wrap"><div class="card"><div class="card-in">
+      <span class="tag">Step 01 / 02</span>
+      <h1><span class="glitch" data-text="INTERFACE">INTERFACE</span><br>Registration</h1>
+      <p class="sub">Enter your details, then take the Faction Test</p>
 
       <form id="regForm">
-        <label class="f" for="name">Full name</label>
-        <input type="text" id="name" placeholder=" " required>
+        <div class="field">
+          <label class="lbl" for="name"><i>[01]</i> Full name</label>
+          <input type="text" id="name" placeholder="ENTER NAME" required autocomplete="name">
+        </div>
+        <div class="field">
+          <label class="lbl" for="email"><i>[02]</i> Email</label>
+          <input type="email" id="email" placeholder="ENTER EMAIL" required autocomplete="email">
+        </div>
+        <div class="field">
+          <label class="lbl" for="phone"><i>[03]</i> Phone</label>
+          <input type="tel" id="phone" placeholder="ENTER PHONE" required autocomplete="tel">
+        </div>
 
-        <label class="f" for="email">Email</label>
-        <input type="email" id="email" placeholder=" " required>
-
-        <label class="f" for="phone">Phone</label>
-        <input type="tel" id="phone" placeholder=" " required>
-
-        <button class="btn" type="submit">Next: Faction Test →</button>
+        <div class="btn-wrap">
+          <button class="btn" type="submit"><span>Next: Faction Test</span><span class="arrow">→</span></button>
+        </div>
       </form>
-    </div>
+    </div></div></div>
   </section>
 
   <!-- ===================== PAGE 2: QUIZ ===================== -->
   <section class="screen" id="screen-quiz">
-    <div class="card">
-      <div class="sticker">STEP 2 / 2</div>
-      <h1><span class="hl">Faction</span> Test</h1>
-      <p class="sub">Pick the answer that feels most like you.</p>
+    <div class="card-wrap"><div class="card"><div class="card-in">
+      <span class="tag">Step 02 / 02</span>
+      <h1><span class="glitch" data-text="FACTION">FACTION</span> Test</h1>
+      <p class="sub">Choose the answer that feels most like you</p>
 
-      <div class="progress"><div class="bar" id="bar"></div><div class="pcount" id="pcount"></div></div>
+      <div class="segs" id="segs"></div>
+      <div class="qmeta"><span>Query</span><b id="pcount"></b></div>
       <h2 class="qtext" id="qtext"></h2>
       <div class="opts" id="opts"></div>
-      <div class="err" id="err"></div>
-    </div>
+    </div></div></div>
   </section>
 
   <!-- ===================== PAGE 3: RESULT ===================== -->
   <section class="screen" id="screen-result">
-    <div class="card">
-      <div class="sticker">RESULT</div>
-      <p class="you">You belong to</p>
-      <div class="rname" id="rname"></div>
-      <img class="rimg" id="rimg" alt="Faction image">
-      <p class="rdesc" id="rdesc"></p>
-      <p class="note" id="rnote">You're registered. See you at INTERFACE!</p>
-    </div>
+    <div class="card-wrap"><div class="card"><div class="card-in">
+      <span class="tag">Result</span>
+
+      <div class="decrypt" id="decrypt">
+        <div class="line">&gt; Decrypting profile...</div>
+        <div class="line dim">&gt; Matching answers to factions</div>
+        <div class="dbar"><div class="dfill"></div></div>
+      </div>
+
+      <div class="reveal" id="reveal">
+        <p class="cls">Classification complete</p>
+        <p class="op" id="op"></p>
+        <div class="rname-wrap"><div class="rname" id="rname"></div></div>
+        <div class="frame">
+          <img id="rimg" alt="Faction image">
+          <div class="sweep"></div>
+        </div>
+        <p class="rdesc" id="rdesc"></p>
+        <p class="note" id="rnote">Registration confirmed. See you at INTERFACE.</p>
+      </div>
+    </div></div></div>
   </section>
 
 </div>
@@ -194,31 +339,31 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw38oII560mUghmP9mXN
    2) CUSTOMIZE YOUR 4 FACTIONS HERE
       name  -> the faction's name (shown on the result page and saved in your Sheet)
       desc  -> short description shown under the image
-      img   -> path to your image file (e.g. put images in an "images" folder
-               next to index.html). Until the file exists, a dummy image is shown.
+      img   -> path to your image (e.g. an "images" folder next to index.html).
+               Until the file exists, a dummy "IMAGE HERE" picture is shown.
       color -> background colour of the name banner
       text  -> text colour of the name banner
    ===================================================================== */
 const FACTIONS = {
-  A: { name: "FACTION A",  // <-- RENAME FACTION A
-       desc: "Write a short description for Faction A here.",
-       img:  "images/faction-a.png",
-       color:"#FF2E9A", text:"#FFFFFF" },
+  A: { name: "CONCIEVER",    // <-- RENAME FACTION A (the creative one)
+       desc: "A blank canvas is only a door that has not yet been painted open.",
+       img:  "conciever.png",
+       color:"#FF2E9A", text:"#F3F3F3" },
 
-  B: { name: "FACTION B",  // <-- RENAME FACTION B
-       desc: "Write a short description for Faction B here.",
-       img:  "images/faction-b.png",
-       color:"#5D00FF", text:"#FFFFFF" },
+  B: { name: "FABRICATOR",   // <-- RENAME FACTION B (the builder)
+       desc: "Every skyscraper began as a single beam laid with intent.",
+       img:  "fabricator.png",
+       color:"#5D00FF", text:"#F3F3F3" },
 
-  C: { name: "FACTION C",  // <-- RENAME FACTION C
-       desc: "Write a short description for Faction C here.",
-       img:  "images/faction-c.png",
+  C: { name: "DECIPHER",   // <-- RENAME FACTION C (the explorer)
+       desc: "The horizon is a promise that retreats only for those who chase it.",
+       img:  "decipher.png",
        color:"#CFFF04", text:"#1C1C1C" },
 
-  D: { name: "FACTION D",  // <-- RENAME FACTION D
-       desc: "Write a short description for Faction D here.",
-       img:  "images/faction-d.png",
-       color:"#1C1C1C", text:"#CFFF04" }
+  D: { name: "INTEGRATOR",   // <-- RENAME FACTION D (the connector)
+       desc: "A single lantern, lit well, can teach a thousand others to glow.",
+       img:  "integrator.png",
+       color:"#F3F3F3", text:"#1C1C1C" }
 };
 
 /* =====================================================================
@@ -267,12 +412,33 @@ const user = {};
 const scores = {A:0,B:0,C:0,D:0};
 let current = 0, locked = false;
 
+/* live clock in the top bar */
+function tick(){ $("clock").textContent = new Date().toLocaleTimeString("en-GB"); }
+tick(); setInterval(tick, 1000);
+
 function show(id){
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   $(id).classList.add("active");
   window.scrollTo({top:0,behavior:"smooth"});
 }
 const shuffle = arr => arr.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
+const pad = n => String(n).padStart(2,"0");
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+/* text "decode" effect for the faction name */
+function scramble(el, text, dur = 1000){
+  const chars = "█▓▒░<>/\\[]{}#@$%&01";
+  const start = performance.now();
+  (function frame(now){
+    const p = Math.min((now - start) / dur, 1);
+    let out = "";
+    for(let i = 0; i < text.length; i++){
+      out += (text[i] === " " || i < text.length * p) ? text[i] : chars[Math.floor(Math.random()*chars.length)];
+    }
+    el.textContent = out;
+    if(p < 1) requestAnimationFrame(frame);
+  })(start);
+}
 
 /* ---- Page 1 -> Page 2 ---- */
 $("regForm").addEventListener("submit", e => {
@@ -285,19 +451,33 @@ $("regForm").addEventListener("submit", e => {
 });
 
 /* ---- Quiz ---- */
+function renderSegments(){
+  $("segs").innerHTML = "";
+  QUESTIONS.forEach((_,i) => {
+    const s = document.createElement("div");
+    s.className = "seg" + (i < current ? " done" : i === current ? " now" : "");
+    $("segs").appendChild(s);
+  });
+}
+
 function renderQuestion(){
   locked = false;
   const item = QUESTIONS[current];
-  $("qtext").textContent = (current+1) + ". " + item.q;
-  $("pcount").textContent = (current+1) + " / " + QUESTIONS.length;
-  $("bar").style.width = (current / QUESTIONS.length * 100) + "%";
+  renderSegments();
+  $("qtext").textContent = item.q;
+  $("pcount").textContent = pad(current+1) + " / " + pad(QUESTIONS.length);
   $("opts").innerHTML = "";
-  shuffle(item.o).forEach(([key,text]) => {
+  shuffle(item.o).forEach(([key,text],i) => {
     const b = document.createElement("button");
-    b.type = "button"; b.className = "opt"; b.textContent = text;
+    b.type = "button"; b.className = "opt";
+    const k = document.createElement("span"); k.className = "k"; k.textContent = "0" + (i+1);
+    const t = document.createElement("span"); t.textContent = text;
+    b.append(k, t);
     b.addEventListener("click", () => pick(b,key));
     $("opts").appendChild(b);
   });
+  /* restart the entrance animation on the question text */
+  const q = $("qtext"); q.style.animation = "none"; void q.offsetWidth; q.style.animation = "";
 }
 
 function pick(btn,key){
@@ -308,34 +488,41 @@ function pick(btn,key){
   setTimeout(() => {
     current++;
     if(current < QUESTIONS.length) renderQuestion(); else finish();
-  }, 350);
+  }, 380);
 }
 
-/* ---- Finish: work out result, save to Sheet, show result page ---- */
+/* ---- Finish: save to Sheet, show decrypt animation, then the result ---- */
 function dummyImg(){
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
-    <rect width="400" height="400" fill="#CFFF04"/>
-    <path d="M0 0L400 400M400 0L0 400" stroke="#1C1C1C" stroke-width="6"/>
-    <rect x="70" y="165" width="260" height="70" fill="#F3F3F3" stroke="#1C1C1C" stroke-width="6"/>
-    <text x="200" y="212" font-family="Roboto,Arial,sans-serif" font-weight="900" font-size="30" text-anchor="middle" fill="#1C1C1C">IMAGE HERE</text></svg>`;
+    <rect width="400" height="400" fill="#1C1C1C"/>
+    <g stroke="#5D00FF" stroke-width="2" opacity=".7">
+      ${Array.from({length:9},(_,i)=>`<path d="M${i*50} 0V400M0 ${i*50}H400"/>`).join("")}
+    </g>
+    <path d="M0 0L400 400M400 0L0 400" stroke="#FF2E9A" stroke-width="4"/>
+    <rect x="60" y="165" width="280" height="70" fill="#1C1C1C" stroke="#CFFF04" stroke-width="5"/>
+    <text x="200" y="213" font-family="Roboto,Arial,sans-serif" font-weight="900" font-size="30" letter-spacing="4" text-anchor="middle" fill="#CFFF04">IMAGE HERE</text></svg>`;
   return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
 }
 
 async function finish(){
-  $("bar").style.width = "100%";
+  renderSegments();
   const top = Object.keys(scores).reduce((a,b) => scores[b] > scores[a] ? b : a);
   const f = FACTIONS[top];
 
-  let saved = true;
-  try{
-    await fetch(SCRIPT_URL, {
-      method:"POST", mode:"no-cors",
-      headers:{"Content-Type":"text/plain;charset=utf-8"},
-      body: JSON.stringify({ ...user, result:f.name, scores })
-    });
-  }catch(err){ saved = false; }
+  show("screen-result");
+  $("decrypt").style.display = "block";
+  $("reveal").classList.remove("active");
 
-  $("rname").textContent = f.name;
+  /* save to Google Sheet while the decrypt animation plays */
+  const save = fetch(SCRIPT_URL, {
+    method:"POST", mode:"no-cors",
+    headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body: JSON.stringify({ ...user, result:f.name, scores })
+  }).then(() => true).catch(() => false);
+
+  const [saved] = await Promise.all([save, wait(2200)]);
+
+  $("op").textContent = "Operative: " + user.name;
   $("rname").style.background = f.color;
   $("rname").style.color = f.text;
   $("rdesc").textContent = f.desc;
@@ -344,8 +531,14 @@ async function finish(){
   img.onerror = () => { img.onerror = null; img.src = dummyImg(); };
   img.src = f.img;
 
-  if(!saved) $("rnote").textContent = "Your result is above, but we couldn't save your registration. Please tell the organiser.";
-  show("screen-result");
+  if(!saved){
+    $("rnote").textContent = "Result shown, but registration was not saved. Tell the organiser.";
+    $("rnote").classList.add("bad");
+  }
+
+  $("decrypt").style.display = "none";
+  $("reveal").classList.add("active");
+  scramble($("rname"), f.name);
 }
 </script>
 </body>
